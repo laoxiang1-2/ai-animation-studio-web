@@ -69,9 +69,11 @@ type CredentialDraft = {
 };
 
 const LOCAL_API_URL = "http://127.0.0.1:8000";
+const PRODUCTION_API_URL =
+  "https://ai-animation-studio-backend-production-6eee.up.railway.app";
 const DEFAULT_API_URL =
   process.env.NEXT_PUBLIC_AI_STUDIO_API_URL ||
-  (process.env.NODE_ENV === "development" ? LOCAL_API_URL : "");
+  (process.env.NODE_ENV === "development" ? LOCAL_API_URL : PRODUCTION_API_URL);
 
 function isLoopbackUrl(value: string) {
   return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/i.test(value.trim());
