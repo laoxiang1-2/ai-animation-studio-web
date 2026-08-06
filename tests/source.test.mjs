@@ -13,6 +13,8 @@ test("contains the production workflow and in-site API setup", async () => {
   assert.match(page, /API 中心/);
   assert.match(page, /输入 API 并连接/);
   assert.match(page, /system\/integrations/);
+  assert.match(page, /X-AI-Studio-Admin-Token/);
+  assert.match(page, /生产后端尚未配置/);
   assert.match(layout, /AI 动画生产工作台/);
   assert.match(packageJson, /"build": "next build"/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);

@@ -157,7 +157,7 @@ button { color: inherit; }
 .api-view { max-width: 1180px; }
 .api-hero { padding: 28px 0 47px; display: grid; grid-template-columns: 1.1fr .9fr; align-items: end; }
 .api-hero .section-index { grid-column: 1 / -1; }.api-hero h1 { font-size: clamp(48px,6vw,78px); margin-bottom: 0; }.api-hero p { padding: 0 0 5px 25px; border-left: 1px solid var(--line); font-size: 12px; }
-.connection-console { display: grid; grid-template-columns: .8fr 1.35fr auto; gap: 25px; align-items: end; padding: 24px; border: 1px solid rgba(201,255,87,.17); background: linear-gradient(110deg, rgba(201,255,87,.055), rgba(255,255,255,.018)); border-radius: 12px; }
+.connection-console { display: grid; grid-template-columns: .75fr 1.25fr 1fr auto; gap: 20px; align-items: end; padding: 24px; border: 1px solid rgba(201,255,87,.17); background: linear-gradient(110deg, rgba(201,255,87,.055), rgba(255,255,255,.018)); border-radius: 12px; }
 .connection-console > div { display: flex; gap: 13px; align-items: center; }.connection-console b, .connection-console small { display: block; }.connection-console b { font-size: 11px; }.connection-console small { color: #686c6f; font-size: 8px; margin-top: 4px; }
 .large-status { width: 10px; height: 10px; border-radius: 50%; background: #505457; }.large-status.connected { background: var(--accent); box-shadow: 0 0 18px rgba(201,255,87,.7); }.large-status.error { background: var(--danger); }
 .connection-console label span { display: block; margin-bottom: 7px; font: 7px/1 monospace; letter-spacing: .15em; color: #6e7275; }

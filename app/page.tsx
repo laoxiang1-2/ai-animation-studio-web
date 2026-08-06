@@ -68,8 +68,14 @@ type CredentialDraft = {
   pythonPath: string;
 };
 
+const LOCAL_API_URL = "http://127.0.0.1:8000";
 const DEFAULT_API_URL =
-  process.env.NEXT_PUBLIC_AI_STUDIO_API_URL || "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_AI_STUDIO_API_URL ||
+  (process.env.NODE_ENV === "development" ? LOCAL_API_URL : "");
+
+function isLoopbackUrl(value: string) {
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/i.test(value.trim());
+}
 
 const fallbackIntegrations: Integration[] = [
   {
@@ -150,6 +156,7 @@ export default function Home() {
   const [view, setView] = useState<"studio" | "api">("studio");
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const [connection, setConnection] = useState<ConnectionState>("idle");
+  const [adminToken, setAdminToken] = useState("");
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
   const [script, setScript] = useState("未来北京，一个少年在沙暴来临前寻找被遗忘的 AI 遗迹。");
   const [plan, setPlan] = useState<PlanResponse | null>(null);
@@ -178,7 +185,12 @@ export default function Home() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem("ai-studio-api-url");
-    if (stored) window.setTimeout(() => setApiUrl(stored), 0);
+    if (!stored) return;
+    if (window.location.protocol === "https:" && isLoopbackUrl(stored)) {
+      window.localStorage.removeItem("ai-studio-api-url");
+      return;
+    }
+    window.setTimeout(() => setApiUrl(stored), 0);
   }, []);
 
   function assetUrl(path: string) {
@@ -186,7 +198,17 @@ export default function Home() {
   }
 
   async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(`${baseUrl}/api/v1${path}`, init);
+    if (!baseUrl) {
+      throw new Error("生产后端尚未配置，请先输入 HTTPS 后端地址。");
+    }
+    if (typeof window !== "undefined" && window.location.protocol === "https:" && baseUrl.startsWith("http://")) {
+      throw new Error("生产网页只能连接 HTTPS 后端，不能使用 HTTP 或 127.0.0.1。");
+    }
+    const headers = new Headers(init?.headers);
+    if (adminToken.trim()) {
+      headers.set("X-AI-Studio-Admin-Token", adminToken.trim());
+    }
+    const response = await fetch(`${baseUrl}/api/v1${path}`, { ...init, headers });
     if (!response.ok) {
       let detail = `请求失败（${response.status}）`;
       try {
@@ -222,7 +244,8 @@ export default function Home() {
       window.localStorage.setItem("ai-studio-api-url", baseUrl);
     } catch (error) {
       setConnection("error");
-      setNotice(error instanceof Error ? error.message : "无法连接后端。");
+      const message = error instanceof Error ? error.message : "无法连接后端。";
+      setNotice(message === "Failed to fetch" ? "无法访问该后端，请确认公网 HTTPS 地址、CORS 和服务状态。" : message);
     }
   }
 
@@ -502,16 +525,17 @@ export default function Home() {
             <section className="api-hero">
               <span className="section-index">CONNECTIONS / API</span>
               <h1>所有能力，<br /><em>一处连接。</em></h1>
-              <p>网页端只连接你的 AI Animation Studio 后端。模型密钥保存在服务端环境变量中，不会发送到浏览器。</p>
+              <p>网页端只连接你的 AI Animation Studio 后端。模型密钥提交后会在服务端加密保存，不会通过状态接口返回。</p>
             </section>
 
             <section className="connection-console">
-              <div><span className={`large-status ${connection}`} /><div><b>{connection === "connected" ? "后端连接正常" : "连接你的生产后端"}</b><small>{connection === "connected" ? `${readyCount} 项能力已配置` : "默认地址适用于本地启动"}</small></div></div>
+              <div><span className={`large-status ${connection}`} /><div><b>{connection === "connected" ? "后端连接正常" : "连接你的生产后端"}</b><small>{connection === "connected" ? `${readyCount} 项能力已配置` : "公网环境需要 HTTPS 地址"}</small></div></div>
               <label><span>BACKEND URL</span><input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} placeholder="https://api.example.com" /></label>
+              <label><span>ADMIN TOKEN</span><input type="password" autoComplete="off" value={adminToken} onChange={(event) => setAdminToken(event.target.value)} placeholder="生产管理员口令" /></label>
               <button className="primary-button" onClick={testConnection} disabled={connection === "checking"}>{connection === "checking" ? "连接中…" : "测试并保存"}<b>↗</b></button>
             </section>
 
-            <div className="security-note"><span>KEY SAFETY</span><p>可以直接在下面输入 API Key。密钥只提交给本机后端并加密保存，不进入浏览器缓存，也不会通过状态接口返回。保存后无需重启即可启用。</p></div>
+            <div className="security-note"><span>KEY SAFETY</span><p>可以直接在下面输入 API Key。管理员口令和模型密钥都不会写入浏览器缓存；模型密钥仅提交给生产后端并加密保存。保存后无需重启即可启用。</p></div>
 
             <section className="integrations-section">
               <div className="section-heading"><div><span className="step-tag">PROVIDER APIS</span><h2>需要连接的能力</h2></div><span className="counter">{readyCount}/{integrations.length} READY</span></div>
